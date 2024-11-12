@@ -1,5 +1,6 @@
 import requests
 import csv
+import re
 from bs4 import BeautifulSoup
 
 def get_paper_title(search_url):
@@ -24,17 +25,10 @@ def get_paper_title(search_url):
                     paper_author = paper.find('p')
 
                 if paper_title_link and paper_author:
-                    # Debug output to verify parsing
                     print(f"[DEBUG] Found paper: {paper_title_link.text.strip()} by {paper_author.text.strip()}")
-
-                    # Get authors
                     paper_attr.append(paper_author.text.strip())
-
-                    # Get paper link from details
                     final_paper_link = get_paper_link('https://www.usenix.org' + paper_title_link.get('href'))
                     paper_attr.append(final_paper_link)
-
-                    # Add paper and its attributes to dict
                     papers[paper_title_link.text.strip()] = paper_attr
             return papers
         else:
@@ -63,19 +57,19 @@ def get_paper_link(usenix_url):
 
 # List of conference URLs to scrape
 data_urls = [
-"https://www.usenix.org/conference/usenixsecurity19/fall-accepted-papers",
-"https://www.usenix.org/conference/usenixsecurity20/spring-accepted-papers",
-"https://www.usenix.org/conference/usenixsecurity20/summer-accepted-papers",
-"https://www.usenix.org/conference/usenixsecurity20/fall-accepted-papers",
-"https://www.usenix.org/conference/usenixsecurity21/summer-accepted-papers",
-"https://www.usenix.org/conference/usenixsecurity21/fall-accepted-papers",
-"https://www.usenix.org/conference/usenixsecurity22/summer-accepted-papers",
-"https://www.usenix.org/conference/usenixsecurity22/fall-accepted-papers",
-"https://www.usenix.org/conference/usenixsecurity22/winter-accepted-papers",
-"https://www.usenix.org/conference/usenixsecurity23/summer-accepted-papers",
-"https://www.usenix.org/conference/usenixsecurity23/fall-accepted-papers",
-"https://www.usenix.org/conference/usenixsecurity24/summer-accepted-papers",
-"https://www.usenix.org/conference/usenixsecurity24/fall-accepted-papers"  
+    "https://www.usenix.org/conference/usenixsecurity19/fall-accepted-papers",
+    "https://www.usenix.org/conference/usenixsecurity20/spring-accepted-papers",
+    "https://www.usenix.org/conference/usenixsecurity20/summer-accepted-papers",
+    "https://www.usenix.org/conference/usenixsecurity20/fall-accepted-papers",
+    "https://www.usenix.org/conference/usenixsecurity21/summer-accepted-papers",
+    "https://www.usenix.org/conference/usenixsecurity21/fall-accepted-papers",
+    "https://www.usenix.org/conference/usenixsecurity22/summer-accepted-papers",
+    "https://www.usenix.org/conference/usenixsecurity22/fall-accepted-papers",
+    "https://www.usenix.org/conference/usenixsecurity22/winter-accepted-papers",
+    "https://www.usenix.org/conference/usenixsecurity23/summer-accepted-papers",
+    "https://www.usenix.org/conference/usenixsecurity23/fall-accepted-papers",
+    "https://www.usenix.org/conference/usenixsecurity24/summer-accepted-papers",
+    "https://www.usenix.org/conference/usenixsecurity24/fall-accepted-papers"  
 ]
 
 # Open CSV file for writing
@@ -87,7 +81,11 @@ with open('usenix.csv', 'w', newline='', encoding='utf-8') as f:
     writer.writerow(header)
 
     for url in data_urls:
-        print(f"[+] Getting papers for URL: {url}")
+        # Extract year from the URL using regex
+        year_match = re.search(r'usenixsecurity(\d{2})', url)
+        year = '20' + year_match.group(1) if year_match else 'Unknown'
+
+        print(f"[+] Getting papers for URL: {url} (Year: {year})")
         papers = get_paper_title(url)
         
         if not papers:
@@ -98,7 +96,7 @@ with open('usenix.csv', 'w', newline='', encoding='utf-8') as f:
         print("[+] Writing papers to CSV")
         for paper, attributes in papers.items():
             print(f"[INFO] Writing paper: {paper}")
-            data = [i, paper, attributes[0], '', 'Usenix', '2023', attributes[1], '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+            data = [i, paper, attributes[0], '', 'Usenix', year, attributes[1], '', '', '', '', '', '', '', '', '', '', '', '', '', '']
             writer.writerow(data)
             i += 1
 
